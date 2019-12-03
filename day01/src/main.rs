@@ -26,7 +26,6 @@ fn compute_fuel_part2(mass: u64) -> u64 {
     while last_fuel != 0 {
         let tmp = compute_fuel(last_fuel);
 
-
         fuel_needed_by_fuel += tmp;
 
         last_fuel = tmp;
@@ -65,12 +64,14 @@ fn handle_part2(input: &str) -> std::io::Result<()> {
 
 fn main() -> std::io::Result<()> {
     let part = env::args().nth(1).expect("Please a part (1 or 2)");
-    let input_path = env::args().nth(2).expect("Please provide a file as argument");
+    let input_path = env::args()
+        .nth(2)
+        .expect("Please provide a file as argument");
 
     match part.as_str() {
         "1" => handle_part1(&input_path),
         "2" => handle_part2(&input_path),
-        _ => unimplemented!()
+        _ => unimplemented!(),
     }
 }
 
