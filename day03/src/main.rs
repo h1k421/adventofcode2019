@@ -41,6 +41,12 @@ struct Position {
     y: i64,
 }
 
+#[derive(Debug, PartialEq, Eq, Default, Clone)]
+struct Intersection {
+    position: Position,
+    steps: i64,
+}
+
 impl Position {
     pub fn merge_positions(&mut self, other: &Position) {
         self.x += other.x;
@@ -100,13 +106,16 @@ impl WireInfo {
         WireInfo { positions }
     }
 
-    pub fn get_intersections(&self, other: &WireInfo) -> Vec<Position> {
+    pub fn get_intersections(&self, other: &WireInfo) -> Vec<Intersection> {
         let mut result = Vec::new();
 
-        for position in &self.positions {
-            for other_position in &other.positions {
+        for (step, position) in self.positions.iter().enumerate() {
+            for (other_step, other_position) in other.positions.iter().enumerate() {
                 if *position == *other_position && *position != Position::default() {
-                    result.push(position.clone());
+                    result.push(Intersection {
+                        position: position.clone(),
+                        steps: (step + other_step) as i64,
+                    });
                 }
             }
         }
@@ -136,11 +145,15 @@ fn parse_wire_infos(input_file: &str) -> std::io::Result<Vec<WireInfo>> {
     Ok(result)
 }
 
-fn get_min_distance(intersections: Vec<Position>) -> i64 {
+fn get_min_distance(intersections: Vec<Intersection>, fast_mode: bool) -> i64 {
     let mut min_distance = None;
 
     for intersection in intersections {
-        let distance = intersection.x.abs() + intersection.y.abs();
+        let distance = if fast_mode {
+            intersection.steps
+        } else {
+            intersection.position.x.abs() + intersection.position.y.abs()
+        };
 
         if let Some(min_distance_value) = min_distance {
             min_distance = Some(std::cmp::min(min_distance_value, distance));
@@ -159,12 +172,11 @@ fn main() -> std::io::Result<()> {
         .expect("Please provide a file as argument");
 
     let wires = parse_wire_infos(&input_path)?;
+    let intersections = wires[0].get_intersections(&wires[1]);
 
     match part.as_str() {
-        "1" => {
-            let intersections = wires[0].get_intersections(&wires[1]);
-            println!("min distance: {:?}", get_min_distance(intersections));
-        }
+        "1" => println!("min distance: {:?}", get_min_distance(intersections, false)),
+        "2" => println!("min distance: {:?}", get_min_distance(intersections, true)),
         _ => unimplemented!(),
     }
 
@@ -179,14 +191,43 @@ mod test {
 
         let example1_wires = parse_wire_infos("example1.txt").unwrap();
         assert_eq!(
-            get_min_distance(example1_wires[0].get_intersections(&example1_wires[1])),
+            get_min_distance(
+                example1_wires[0].get_intersections(&example1_wires[1]),
+                false
+            ),
             159
         );
 
         let example2_wires = parse_wire_infos("example2.txt").unwrap();
         assert_eq!(
-            get_min_distance(example2_wires[0].get_intersections(&example2_wires[1])),
+            get_min_distance(
+                example2_wires[0].get_intersections(&example2_wires[1]),
+                false
+            ),
             135
+        );
+    }
+
+    #[test]
+    pub fn test_part2() {
+        use super::*;
+
+        let example1_wires = parse_wire_infos("example1.txt").unwrap();
+        assert_eq!(
+            get_min_distance(
+                example1_wires[0].get_intersections(&example1_wires[1]),
+                true
+            ),
+            610
+        );
+
+        let example2_wires = parse_wire_infos("example2.txt").unwrap();
+        assert_eq!(
+            get_min_distance(
+                example2_wires[0].get_intersections(&example2_wires[1]),
+                true
+            ),
+            410
         );
     }
 }
