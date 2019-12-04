@@ -75,6 +75,7 @@ fn main() -> std::io::Result<()> {
     }
 }
 
+#[cfg(test)]
 mod test {
     #[test]
     fn test_part1() {
